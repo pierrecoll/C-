@@ -63,14 +63,13 @@ Return Value:
     //
     // Reset the proxy list to the beginning in case it is being reused.
     //
-
+	printf("SendRequestWithProxyFailover: resets the proxy list to the beginning in case it is being reused.\r\n");
     pProxyResolver->ResetProxyCursor();
-
     for(;;)
     {
+		printf("Calling pProxyResolver->SetNextProxySetting\r\n");
         dwError = pProxyResolver->SetNextProxySetting(hRequest,
                                                       dwRequestError);
-
         if (dwError == ERROR_NO_MORE_ITEMS)
         {
             //
@@ -80,6 +79,7 @@ Return Value:
             //
 
             dwError = dwRequestError;
+			ErrorString(dwError);
             goto quit;
         }
 
@@ -89,10 +89,11 @@ Return Value:
             // Some other error occured such as a bad proxy setting, bad handle,
             // out of memory, etc.
             //
-
+			ErrorPrint();
             goto quit;
         }
 
+		printf("Calling WinHttpSendRequest with null parameters\r\n");
         if (!WinHttpSendRequest(hRequest,
                                 NULL,                // headers
                                 0,                   // headerslen
@@ -102,13 +103,16 @@ Return Value:
                                 NULL))               // context
         {
             dwRequestError = GetLastError();
+			ErrorString(dwRequestError);
             continue;
         }
 
+		printf("Calling WinHttpReceiveResponse\r\n");
         if (!WinHttpReceiveResponse(hRequest,
                                     NULL))           // reserved
         {
             dwRequestError = GetLastError();
+			ErrorString(dwRequestError);
             continue;
         }
 
@@ -167,7 +171,7 @@ Return Value:
     //
     // Connect session.
     //
-
+	printf("SendRequestToHost: calling WinHttpConnect with host: %S\r\n", pwszHost);
     hConnect = WinHttpConnect(hSession,
                               pwszHost,
                               INTERNET_DEFAULT_HTTP_PORT,
@@ -182,7 +186,7 @@ Return Value:
     //
     //  Open HTTP request.
     //
-
+	printf("Calling WinHttpOpenRequest with path: %S\r\n", pwszPath);
     hRequest = WinHttpOpenRequest(hConnect,
                                   L"GET",
                                   pwszPath,
@@ -199,6 +203,7 @@ Return Value:
     //
     //  Send the HTTP request with proxy failover if valid.
     //
+	printf("Calling SendRequestWithProxyFailover\r\n");
 
     dwError = SendRequestWithProxyFailover(hRequest,
                                            pProxyResolver);
@@ -214,7 +219,7 @@ Return Value:
     //
 
     dwFlags = WINHTTP_QUERY_FLAG_NUMBER | WINHTTP_QUERY_STATUS_CODE;
-
+	printf("Calling WinHttpQueryHeaders with flags WINHTTP_QUERY_FLAG_NUMBER | WINHTTP_QUERY_STATUS_CODE\r\n");
     if (!WinHttpQueryHeaders(hRequest,
                              dwFlags,
                              NULL,                       // name
